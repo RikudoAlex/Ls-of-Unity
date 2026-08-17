@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <title>HCI ICU Decision Tree Engine Demo</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1e24; color: #e1e6ed; margin: 20px; }
+        h1, h2, h3 { color: #00adb5; }
+        .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        .card { background: #222831; border-radius: 8px; padding: 20px; border: 1px solid #393e46; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .vitals-bar { display: flex; justify-content: space-between; background: #000; padding: 15px; border-radius: 6px; border: 2px solid #393e46; font-family: monospace; }
+        .vital-item { text-align: center; }
+        .vital-val { font-size: 1.5em; font-weight: bold; }
+        .alarm { color: #ff2e63 !important; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.3; } }
+        .btn { background: #00adb5; color: #fff; border: none; padding: 10px 15px; margin: 5px 0; border-radius: 4px; cursor: pointer; width: 100%; font-size: 14px; transition: 0.2s; }
+        .btn:hover { background: #008891; }
+        .btn-secondary { background: #393e46; }
+        .btn-secondary:hover { background: #4e545c; }
+        .toast { padding: 10px; border-radius: 4px; margin-bottom: 15px; font-weight: bold; }
+        .toast-danger { background: #ff2e63; color: white; }
+        .toast-success { background: #21bf73; color: white; }
+        .toast-info { background: #00adb5; color: white; }
+        .log-box { background: #111; color: #00ff66; font-family: monospace; padding: 10px; height: 180px; overflow-y: auto; font-size: 12px; border-radius: 4px; }
+        input, select { width: 95%; padding: 8px; margin: 5px 0 15px 0; background: #393e46; border: 1px solid #555; color: white; border-radius: 4px; }
+        .timer-badge { background: #ff2e63; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.9em; float: right; }
+    </style>
+</head>
+<body>
+
+    <h1>🏥 ΜΕΘ Decision Tree Engine (HCI Prototype)</h1>
+    <p><i>Demo Μηχανής Σεναρίου βασισμένης σε JSON για το μάθημα Αλληλεπίδρασης Ανθρώπου-Υπολογιστή.</i></p>
+
+    <!-- LIVE MONITOR BAR -->
+    <div class="vitals-bar card">
+        <div class="vital-item"><div>HR (Παλμοί)</div><div id="v-hr" class="vital-val" style="color: #00ff66;">--</div></div>
+        <div class="vital-item"><div>SpO2 (Οξυγόνο)</div><div id="v-spo2" class="vital-val" style="color: #00adb5;">--</div></div>
+        <div class="vital-item"><div>RR (Αναπνοές)</div><div id="v-rr" class="vital-val" style="color: #ffc107;">--</div></div>
+        <div class="vital-item"><div>BP (Πίεση)</div><div id="v-bp" class="vital-val" style="color: #17a2b8;">--</div></div>
+        <div class="vital-item"><div>SCORE</div><div id="v-score" class="vital-val" style="color: #fff;">100</div></div>
+    </div>
+
+    <br>
+
+    <div class="grid">
+        <!-- MAIN SCENARIO INTERFACE -->
+        <div class="card">
+            <h2 id="node-title">Φόρτωση Σεναρίου...</h2>
+            <div id="toast-area"></div>
+            
+            <p id="node-text" style="font-size: 1.1em; line-height: 1.5;"></p>
+            
+            <div id="node-actions" style="margin-top: 20px;"></div>
+        </div>
+
+        <!-- EHR & LOGS SIDEBAR -->
+        <div>
+            <!-- EHR PANEL -->
+            <div class="card" style="margin-bottom: 20px;">
+                <h3>📑 Τερματικό EHR (e-Health)</h3>
+                <small>Συμπληρώστε τα πεδία για να ξεκλειδώσετε τα Documentation Gates.</small>
+                <hr style="border-color: #393e46; margin: 10px 0;">
+                
+                <label>Κλινική Αξιολόγηση (Observation):</label>
+                <input type="text" id="ehr-obs" placeholder="π.χ. Κυάνωση και ταχύπνοια">
+                
+                <label>Ρύθμιση Αναπνευστήρα (FiO2):</label>
+                <input type="text" id="ehr-fio2" placeholder="π.χ. 100%">
+
+                <label>Ημερολόγιο Επικοινωνίας (Recipient & Outcome):</label>
+                <input type="text" id="ehr-comm" placeholder="π.χ. Εφημερεύων - Ενημερώθηκε">
+
+                <button class="btn btn-secondary" onclick="saveEHR()">💾 Αποθήκευση στο EHR</button>
+            </div>
+
+            <!-- SYSTEM LOGS -->
+            <div class="card">
+                <h3>📜 Logs Συστήματος (JSON Logging)</h3>
+                <div id="system-logs" class="log-box"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+// JSON DATA (Ακριβώς από το παράρτημα της εργασίας)
+const scenarioJSON = {
+ "schema_version": "1.0",
+ "scenario_meta": {
+   "id": "icu_scenario_hypoxia_v1",
+   "title": "ΜΕΘ: Διαχείριση Υποξαιμίας & Αναπνευστήρα"
+ },
+ "initial_state": {
+   "time_elapsed": 0,
+   "current_score": 100,
+   "flags": { "assessment_complete": false, "oxygen_adjusted": false, "documentation_1_complete": false, "escalation_complete": false, "documentation_2_complete": false },
+   "vitals": { "hr": 110, "spo2": 88, "rr": 24, "bp": "125/80", "temp": 37.0 }
+ },
+ "rules": {
+   "global_rules": [
+     {
+       "id": "rule_hypoxia_alarm",
+       "condition": { "vitals.spo2": { "lt": 90 } },
+       "effects": [
+         { "type": "ui_toast", "style": "danger", "message": "🚨 ΣΥΝΑΓΕΡΜΟΣ: SpO2 < 90% (Υποξαιμία)" }
+       ]
+     }
+   ]
+ },
+ "nodes": [
+   {
+     "id": "n1_start",
+     "type": "message",
+     "text": "Βρίσκεστε στη ΜΕΘ. Ο ασθενής στην κλίνη 1 εμφανίζει ξαφνική δύσπνοια. Το μόνιτορ χτυπάει (SpO2: 88%).",
+     "next_node_id": "n2_initial_decision"
+   },
+   {
+     "id": "n2_initial_decision",
+     "type": "decision",
+     "text": "Ποια είναι η πρώτη σου ενέργεια;",
+     "options": [
+       {
+         "id": "opt_assess",
+         "label": "🔍 Άμεση Αξιολόγηση Ασθενούς [Hotspot: Patient]",
+         "effects": { "score_delta": 10, "state_update": { "flags.assessment_complete": true }, "toast": "Παρατηρείς κυάνωση και ταχύπνοια." },
+         "next_node_id": "n3_intervention"
+       },
+       {
+         "id": "opt_check_monitor",
+         "label": "📊 Έλεγχος Ιστορικού στο Μόνιτορ [Hotspot: Monitor]",
+         "effects": { "score_delta": 5, "toast": "Βλέπεις πτώση SpO2 τα τελευταία 5 λεπτά." },
+         "next_node_id": "n3_intervention"
+       }
+     ],
+     "timeout": {
+       "seconds": 15,
+       "on_timeout_effects": { "vitals_update": { "spo2": 85, "hr": 120 }, "score_delta": -10, "toast": "⚠️ Καθυστέρηση! Το SpO2 έπεσε στο 85%." },
+       "next_node_id": "n3_intervention"
+     }
+   },
+   {
+     "id": "n3_intervention",
+     "type": "decision",
+     "text": "Το πρόβλημα είναι οξυγοναντικό. Πρέπει να ρυθμίσεις τον αναπνευστήρα.",
+     "options": [
+       {
+         "id": "opt_increase_o2",
+         "label": "🫁 Αύξηση FiO2 (100%) [Hotspot: Ventilator]",
+         "effects": { "state_update": { "flags.oxygen_adjusted": true }, "vitals_update": { "spo2": 94, "hr": 100 }, "score_delta": 20, "toast": "✅ Η ρύθμιση έγινε. Το SpO2 ανεβαίνει." },
+         "next_node_id": "n4_gate_documentation_1"
+       },
+       {
+         "id": "opt_do_nothing",
+         "label": "⏳ Καμία αλλαγή - Αναμονή",
+         "effects": { "vitals_update": { "spo2": 80, "hr": 130 }, "score_delta": -20, "toast": "⛔ Κρίσιμο λάθος. Ο ασθενής αποκορεώνεται." },
+         "next_node_id": "n4_gate_documentation_1"
+       }
+     ]
+   },
+   {
+     "id": "n4_gate_documentation_1",
+     "type": "gate",
+     "text": "🛑 GATE: Τεκμηρίωση Αξιολόγησης & Παρέμβασης.",
+     "description": "Το σύστημα μπλοκάρει τη συνέχεια μέχρι να συμπληρωθούν τα πεδία στο EHR.",
+     "required_fields": ["ehr-obs", "ehr-fio2"],
+     "feedback_blocked": "⚠️ Πρέπει να συμπληρώσεις τα πεδία Observation και FiO2 στο EHR δεξιά για να προχωρήσεις!",
+     "feedback_success": "✅ Η τεκμηρίωση αποθηκεύτηκε επιτυχώς.",
+     "effects_on_pass": { "state_update": { "flags.documentation_1_complete": true }, "score_delta": 10 },
+     "next_node_id": "n5_reassessment"
+   },
+   {
+     "id": "n5_reassessment",
+     "type": "message",
+     "text": "5 λεπτά αργότερα... Η κατάσταση έχει σταθεροποιηθεί, αλλά ο ασθενής παραμένει ταχύπνοος.",
+     "next_node_id": "n6_escalation_decision"
+   },
+   {
+     "id": "n6_escalation_decision",
+     "type": "decision",
+     "text": "Χρειάζεται περαιτέρω ενέργεια;",
+     "options": [
+       {
+         "id": "opt_call_doc",
+         "label": "📞 Κλήση Ιατρού (Κλιμάκωση) [Hotspot: Call Button]",
+         "effects": { "state_update": { "flags.escalation_complete": true }, "score_delta": 10, "toast": "Έγινε κλήση στον εφημερεύοντα." },
+         "next_node_id": "n7_gate_documentation_2"
+       },
+       {
+         "id": "opt_wait",
+         "label": "👀 Όχι, συνεχίζω παρακολούθηση",
+         "effects": { "score_delta": 0, "toast": "Συνεχίζεις την παρακολούθηση." },
+         "next_node_id": "n8_end_scenario"
+       }
+     ]
+   },
+   {
+     "id": "n7_gate_documentation_2",
+     "type": "gate",
+     "text": "🛑 GATE: Καταγραφή Επικοινωνίας.",
+     "required_fields": ["ehr-comm"],
+     "feedback_blocked": "⚠️ Εκκρεμεί η καταγραφή της κλήσης στο Communication Log του EHR!",
+     "effects_on_pass": { "state_update": { "flags.documentation_2_complete": true }, "score_delta": 5 },
+     "next_node_id": "n8_end_scenario"
+   },
+   {
+     "id": "n8_end_scenario",
+     "type": "end",
+     "text": "🎉 Το σενάριο ολοκληρώθηκε!"
+   }
+ ]
+};
+
+// ENGINE STATE
+let state = {};
+let timerInterval = null;
+
+function initEngine() {
+    state = JSON.parse(JSON.stringify(scenarioJSON.initial_state));
+    state.ehrData = {};
+    logEvent("SCENARIO_START", { id: scenarioJSON.scenario_meta.id });
+    updateVitalsUI();
+    checkGlobalRules();
+    goToNode(scenarioJSON.nodes[0].id);
+}
+
+function goToNode(nodeId) {
+    if(timerInterval) clearInterval(timerInterval);
+    document.getElementById("toast-area").innerHTML = "";
+
+    const node = scenarioJSON.nodes.find(n => n.id === nodeId);
+    if (!node) return;
+
+    state.currentNodeId = nodeId;
+    logEvent("NODE_ENTER", { nodeId: node.id, type: node.type });
+
+    document.getElementById("node-title").innerText = `Node: ${node.id}`;
+    document.getElementById("node-text").innerText = node.text;
+
+    const actionsDiv = document.getElementById("node-actions");
+    actionsDiv.innerHTML = "";
+
+    // 1. MESSAGE NODE
+    if (node.type === "message") {
+        const btn = document.createElement("button");
+        btn.className = "btn";
+        btn.innerText = "Συνέχεια ➔";
+        btn.onclick = () => goToNode(node.next_node_id);
+        actionsDiv.appendChild(btn);
+    } 
+    // 2. DECISION NODE
+    else if (node.type === "decision") {
+        if (node.timeout) {
+            let timeLeft = node.timeout.seconds;
+            document.getElementById("node-title").innerHTML += `<span class="timer-badge">⏱️ Timeout: <span id="timer">${timeLeft}</span>s</span>`;
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById("timer").innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    showToast("danger", "⏱️ Timeout! Χρόνος εξαντλήθηκε.");
+                    applyEffects(node.timeout.on_timeout_effects);
+                    goToNode(node.timeout.next_node_id);
+                }
+            }, 1000);
+        }
+
+        node.options.forEach(opt => {
+            const btn = document.createElement("button");
+            btn.className = "btn";
+            btn.innerText = opt.label;
+            btn.onclick = () => {
+                if(timerInterval) clearInterval(timerInterval);
+                logEvent("OPTION_SELECTED", { optionId: opt.id });
+                if (opt.effects) applyEffects(opt.effects);
+                goToNode(opt.next_node_id);
+            };
+            actionsDiv.appendChild(btn);
+        });
+    }
+    // 3. GATE NODE
+    else if (node.type === "gate") {
+        const checkPassed = node.required_fields.every(f => state.ehrData[f] && state.ehrData[f].trim() !== "");
+        
+        if (checkPassed) {
+            showToast("success", node.feedback_success || "✅ Το Gate προσπεράστηκε!");
+            if (node.effects_on_pass) applyEffects(node.effects_on_pass);
+            const btn = document.createElement("button");
+            btn.className = "btn";
+            btn.innerText = "Συνέχεια μετά το Gate ➔";
+            btn.onclick = () => goToNode(node.next_node_id);
+            actionsDiv.appendChild(btn);
+        } else {
+            showToast("danger", node.feedback_blocked);
+            const btn = document.createElement("button");
+            btn.className = "btn btn-secondary";
+            btn.innerText = "🔄 Επανέλεγχος Gate (Αφού συμπληρώσεις το EHR)";
+            btn.onclick = () => goToNode(node.id);
+            actionsDiv.appendChild(btn);
+        }
+    }
+    // 4. END NODE
+    else if (node.type === "end") {
+        document.getElementById("node-text").innerHTML = `
+            <h3>🏁 Debriefing Report</h3>
+            <p><b>Τελικό Σκορ:</b> ${state.current_score}</p>
+            <p><b>Κατάσταση SpO2:</b> ${state.vitals.spo2}%</p>
+            <p><b>Τεκμηρίωση EHR:</b> ${state.flags.documentation_1_complete ? '✅ Πλήρης' : '❌ Ελλιπής'}</p>
+        `;
+        const btn = document.createElement("button");
+        btn.className = "btn";
+        btn.innerText = "🔄 Reset Σεναρίου";
+        btn.onclick = () => initEngine();
+        actionsDiv.appendChild(btn);
+    }
+}
+
+function applyEffects(effects) {
+    if (effects.score_delta) state.current_score += effects.score_delta;
+    if (effects.vitals_update) Object.assign(state.vitals, effects.vitals_update);
+    if (effects.state_update) Object.assign(state.flags, effects.state_update);
+    if (effects.toast) showToast("info", effects.toast);
+
+    updateVitalsUI();
+    checkGlobalRules();
+}
+
+function checkGlobalRules() {
+    scenarioJSON.rules.global_rules.forEach(rule => {
+        if (rule.condition["vitals.spo2"]?.lt && state.vitals.spo2 < rule.condition["vitals.spo2"].lt) {
+            rule.effects.forEach(e => showToast("danger", e.message));
+            document.getElementById("v-spo2").classList.add("alarm");
+        } else {
+            document.getElementById("v-spo2").classList.remove("alarm");
+        }
+    });
+}
+
+function updateVitalsUI() {
+    document.getElementById("v-hr").innerText = state.vitals.hr;
+    document.getElementById("v-spo2").innerText = state.vitals.spo2 + "%";
+    document.getElementById("v-rr").innerText = state.vitals.rr;
+    document.getElementById("v-bp").innerText = state.vitals.bp;
+    document.getElementById("v-score").innerText = state.current_score;
+}
+
+function saveEHR() {
+    state.ehrData["ehr-obs"] = document.getElementById("ehr-obs").value;
+    state.ehrData["ehr-fio2"] = document.getElementById("ehr-fio2").value;
+    state.ehrData["ehr-comm"] = document.getElementById("ehr-comm").value;
+    
+    logEvent("EHR_SUBMIT", state.ehrData);
+    alert("Τα στοιχεία αποθηκεύτηκαν στο EHR!");
+}
+
+function showToast(type, msg) {
+    const area = document.getElementById("toast-area");
+    const div = document.createElement("div");
+    div.className = `toast toast-${type}`;
+    div.innerText = msg;
+    area.appendChild(div);
+}
+
+function logEvent(event, details) {
+    const logBox = document.getElementById("system-logs");
+    const entry = `[${new Date().toLocaleTimeString()}] ${event}: ${JSON.stringify(details)}\n`;
+    logBox.innerText += entry;
+    logBox.scrollTop = logBox.scrollHeight;
+}
+
+// Start on Load
+window.onload = initEngine;
+</script>
+</body>
+</html>
