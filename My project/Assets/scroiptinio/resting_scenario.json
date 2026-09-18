@@ -1,0 +1,17 @@
+{
+  "patient_info": {
+    "name": "Charlie",
+    "surname": "Kirkousathanas",
+    "ssn": "12038401923",
+    "admission_date": "18/09/2026",
+    "reason": "Οξεία αναπνευστική ανεπάρκεια - παρακολούθηση στη ΜΕΘ"
+  },
+  "initial_state": {
+    "vitals": {
+      "hr": 78,
+      "temp": 36.8,
+      "rr": 15,
+      "spo2": 98
+    }
+  }
+}
