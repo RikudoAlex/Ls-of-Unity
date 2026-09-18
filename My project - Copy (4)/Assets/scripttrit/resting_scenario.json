@@ -1,0 +1,27 @@
+{
+  "patient_info": {
+    "name": "Charlie",
+    "surname": "Kirkousathanas",
+    "ssn": "12038401923",
+    "admission_date": "18/09/2026",
+    "reason": "Σταθέρες ενδείξεις - Παρακολούθηση"
+  },
+  "initial_state": {
+    "current_score": 100,
+    "vitals": {
+      "hr": 78,
+      "temp": 36.8,
+      "rr": 15,
+      "spo2": 98
+    }
+  },
+  "nodes": [
+    {
+      "id": "n1_start",
+      "type": "end",
+      "text": "Monitor initialized. Patient vitals stable. Waiting for attending physician to begin scenario...",
+      "next_node_id": "",
+      "options": []
+    }
+  ]
+}
