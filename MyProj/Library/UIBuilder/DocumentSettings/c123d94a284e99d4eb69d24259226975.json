@@ -1,0 +1,30 @@
+{
+    "UxmlGuid": "c123d94a284e99d4eb69d24259226975",
+    "UxmlPath": "Assets/scenario_help_3.uxml",
+    "CanvasX": 0,
+    "CanvasY": 0,
+    "CanvasWidth": 350,
+    "CanvasHeight": 668,
+    "MatchGameView": false,
+    "ZoomScale": 0.6499999761581421,
+    "PanOffset": {
+        "x": 115.17277526855469,
+        "y": 79.50000762939453
+    },
+    "ColorModeBackgroundOpacity": 1.0,
+    "ImageModeCanvasBackgroundOpacity": 1.0,
+    "CameraModeCanvasBackgroundOpacity": 1.0,
+    "EnableCanvasBackground": false,
+    "CanvasBackgroundMode": 0,
+    "CanvasBackgroundColor": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 1.0
+    },
+    "CanvasBackgroundImage": {
+        "instanceID": 0
+    },
+    "CanvasBackgroundImageScaleMode": 1,
+    "CanvasBackgroundCameraName": ""
+}

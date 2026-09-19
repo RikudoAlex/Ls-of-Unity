@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0",
+  "scenario_meta": {
+    "id": "icu_scenario_bradycardia_v1",
+    "title": "ΜΕΘ: Διαχείριση Σοβαρής Βραδυκαρδίας",
+    "description": "Σενάριο αντιμετώπισης επικίνδυνης πτώσης καρδιακού ρυθμού.",
+    "estimated_duration_minutes": 5,
+    "difficulty": "Advanced"
+  },
+  "patient_info": {
+    "name": "Charlie",
+    "surname": "Kirkousathanas",
+    "ssn": "12038401923",
+    "admission_date": "18/09/2026",
+    "reason": "Οξύτερο έμφραγμα μυοκαρδίου - Παρακολούθηση"
+  },
+  "initial_state": {
+    "current_score": 100,
+    "vitals": {
+      "hr": 38,
+      "temp": 36.5,
+      "rr": 12,
+      "spo2": 94
+    }
+  },
+  "nodes": [
+    {
+      "id": "n1_start",
+      "type": "message",
+      "text": "Συναγερμός μόνιτορ: Ο καρδιακός ρυθμός του ασθενούς έπεσε στους 38 παλμούς (Βραδυκαρδία).",
+      "next_node_id": "n2_decision"
+    },
+    {
+      "id": "n2_decision",
+      "type": "decision",
+      "text": "Ποια είναι η ενδεδειγμένη φαρμακευτική παρέμβαση;",
+      "options": [
+        {
+          "id": "opt_atropine",
+          "label": "Χορήγηση Ατροπίνης IV",
+          "vitals_update": { "hr": 72, "spo2": 98 },
+          "score_delta": 20,
+          "next_node_id": "n3_gate_doc"
+        },
+        {
+          "id": "opt_wait_doc",
+          "label": "Αναμονή για τον ιατρό χωρίς παρέμβαση",
+          "vitals_update": { "hr": 32, "spo2": 90 },
+          "score_delta": -15,
+          "next_node_id": "n3_gate_doc"
+        }
+      ]
+    },
+    {
+      "id": "n3_gate_doc",
+      "type": "gate",
+      "text": "GATE: Καταγραφή χορήγησης Ατροπίνης στο EHR.",
+      "next_node_id": "n4_end"
+    },
+    {
+      "id": "n4_end",
+      "type": "end",
+      "text": "Το σενάριο Βραδυκαρδίας ολοκληρώθηκε!"
+    }
+  ]
+}
