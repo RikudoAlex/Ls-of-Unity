@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "scenario_meta": {
+    "id": "scenario_resting",
+    "title": "Κατάσταση Αναμονής / Ηρεμίας",
+    "description": "Παρακολούθηση σταθερού ασθενή",
+    "estimated_duration_minutes": 5,
+    "difficulty": "Beginner"
+  },
+  "patient_info": {
+    "name": "Charlie",
+    "surname": "Kirkousathanas",
+    "ssn": "12038401923",
+    "admission_date": "10/09/2025",
+    "reason": "Σταθερές ενδείξεις - Παρακολούθηση"
+  },
+  "initial_state": {
+    "current_score": 50,
+    "vitals": {
+      "hr": 78,
+      "temp": 36.8,
+      "rr": 15,
+      "spo2": 98
+    }
+  },
+  "global_rules": [],
+  "nodes": [
+    {
+      "id": "n1_start",
+      "type": "message",
+      "text": "Monitor initialized. Patient vitals stable. Waiting for attending physician to begin scenario...",
+      "next_node_id": ""
+    },
+    {
+      "id": "n2_end",
+      "type": "end",
+      "text": "Η κατάσταση αναμονής τερματίστηκε. Επιστροφή στο κεντρικό μενού."
+    }
+  ]
+}

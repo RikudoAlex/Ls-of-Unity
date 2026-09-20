@@ -1,0 +1,143 @@
+{
+  "schema_version": "1.0",
+  "scenario_meta": {
+    "id": "icu_scenario_hypotension_v1",
+    "title": "ΜΕΘ: Διαχείριση Οξείας Υπότασης & Αιμοδυναμικής Αστάθειας",
+    "description": "Σενάριο αντιμετώπισης απότομης πτώσης πίεσης και ταχυκαρδίας με χορήγηση υγρών IV.",
+    "estimated_duration_minutes": 6,
+    "difficulty": "Intermediate"
+  },
+  "patient_info": {
+    "name": "Charlie",
+    "surname": "Kirkousathanas",
+    "ssn": "12038401923",
+    "admission_date": "18/09/2026",
+    "reason": "Μετεγχειρητική παρακολούθηση - Αιμοδυναμική αστάθεια"
+  },
+  "initial_state": {
+    "current_score": 50,
+    "vitals": {
+      "hr": 125,
+      "temp": 36.6,
+      "rr": 20,
+      "spo2": 96
+    }
+  },
+  "global_rules": [
+    {
+      "id": "rule_tachycardia_alarm",
+      "condition_hr_gt": 120,
+      "toast_message": "ΣΥΝΑΓΕΡΜΟΣ: HR > 120 bpm (Έντονη Ταχυκαρδία/Υπόταση!)",
+      "monitor_color": "yellow"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "n1_start",
+      "type": "message",
+      "text": "Ο ασθενής εμφανίζει έντονη ταχυκαρδία (HR: 125) και ζάλη. Η αρτηριακή πίεση πέφτει στο 80/45 mmHg.",
+      "next_node_id": "n2_initial_check"
+    },
+    {
+      "id": "n2_initial_check",
+      "type": "decision",
+      "text": "Ποια είναι η πρώτη κλινική ενέργεια;",
+      "timeout_seconds": 20,
+      "timeout_next_node_id": "n3_intervention",
+      "timeout_vitals_update": { "hr": 135, "spo2": 92 },
+      "timeout_score_delta": -10,
+      "timeout_toast": "Καθυστέρηση! Η ταχυκαρδία επιδεινώνεται (135 bpm).",
+      "options": [
+        {
+          "id": "opt_check_iv",
+          "label": "Έλεγχος Φλεβοκαθετήρα & Παροχής Υγρών",
+          "score_delta": 10,
+          "toast": "Ο φλεβοκαθετήρας είναι βατός.",
+          "next_node_id": "n3_intervention"
+        },
+        {
+          "id": "opt_recheck_bp",
+          "label": "Επαναμέτρηση Αρτηριακής Πίεσης",
+          "score_delta": 5,
+          "toast": "Επιβεβαίωση: Αρτηριακή Πίεση 78/42 mmHg.",
+          "next_node_id": "n3_intervention"
+        }
+      ]
+    },
+    {
+      "id": "n3_intervention",
+      "type": "decision",
+      "text": "Ποια είναι η άμεση θεραπευτική παρέμβαση;",
+      "options": [
+        {
+          "id": "opt_bolus",
+          "label": "Χορήγηση Bolus Υγρών (NS 0.9% 500ml IV)",
+          "vitals_update": { "hr": 95, "spo2": 97 },
+          "score_delta": 20,
+          "toast": "Χορηγήθηκε bolus υγρών. Η πίεση σταθεροποιείται και ο HR πέφτει στους 95 bpm.",
+          "next_node_id": "n4_gate_doc_1"
+        },
+        {
+          "id": "opt_observe",
+          "label": "Απλή παρακολούθηση χωρίς υγρά",
+          "vitals_update": { "hr": 140, "spo2": 90 },
+          "score_delta": -20,
+          "toast": "Σοβαρό σφάλμα! Ο ασθενής οδηγείται σε καταπληξία (Shock).",
+          "next_node_id": "n4_gate_doc_1"
+        }
+      ]
+    },
+    {
+      "id": "n4_gate_doc_1",
+      "type": "gate",
+      "text": "GATE: Τεκμηρίωση χορήγησης υγρών και τιμών πίεσης στο EHR.",
+      "required_form_id": "intervention_form",
+      "feedback_blocked": "Πρέπει να καταγράψετε τη χορήγηση υγρών στο EHR.",
+      "feedback_success": "Η χορήγηση υγρών καταχωρήθηκε στο EHR.",
+      "score_delta": 10,
+      "next_node_id": "n5_reassessment"
+    },
+    {
+      "id": "n5_reassessment",
+      "type": "message",
+      "text": "10 λεπτά μετά τη χορήγηση υγρών: Ο ασθενής είναι πιο ήρεμος, HR: 95 bpm, BP: 110/70 mmHg.",
+      "next_node_id": "n6_escalation_decision"
+    },
+    {
+      "id": "n6_escalation_decision",
+      "type": "decision",
+      "text": "Απαιτείται επιπλέον κλινική ενέργεια;",
+      "options": [
+        {
+          "id": "opt_notify_physician",
+          "label": "Ενημέρωση Θεράποντος Ιατρού & Εργαστηριακός Έλεγχος (Hct/Hbg)",
+          "score_delta": 10,
+          "toast": "Ενημερώθηκε ο ιατρός και εστάλησαν εξετάσεις αίματος.",
+          "next_node_id": "n7_gate_doc_2"
+        },
+        {
+          "id": "opt_stop_action",
+          "label": "Ολοκλήρωση χωρίς περαιτέρω έλεγχο",
+          "score_delta": 0,
+          "toast": "Δεν ζητήθηκε εργαστηριακός έλεγχος.",
+          "next_node_id": "n8_end"
+        }
+      ]
+    },
+    {
+      "id": "n7_gate_doc_2",
+      "type": "gate",
+      "text": "GATE: Καταγραφή ιατρικής ενημέρωσης στο Communication Log.",
+      "required_form_id": "communication_log",
+      "feedback_blocked": "Εκκρεμεί η καταγραφή της ενημέρωσης ιατρού στο EHR.",
+      "feedback_success": "Η επικοινωνία τεκμηριώθηκε επιτυχώς.",
+      "score_delta": 5,
+      "next_node_id": "n8_end"
+    },
+    {
+      "id": "n8_end",
+      "type": "end",
+      "text": "Το σενάριο Υπότασης ολοκληρώθηκε επιτυχώς!"
+    }
+  ]
+}
