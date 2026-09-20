@@ -1,0 +1,116 @@
+{
+  "schema_version": "1.0",
+  "scenario_meta": {
+    "id": "icu_scenario_hypoxia_v1",
+    "title": "ΜΕΘ: Διαχείριση Υποξαιμίας & Αναπνευστήρα",
+    "description": "Σενάριο διαχείρισης πτώσης κορεσμού με χρήση αναπνευστήρα.",
+    "estimated_duration_minutes": 8,
+    "difficulty": "Intermediate"
+  },
+  "patient_info": {
+    "name": "Charlie",
+    "surname": "Kirkousathanas",
+    "ssn": "12038401923",
+    "admission_date": "10/09/2025",
+    "reason": "Οξεία αναπνευστική ανεπάρκεια - παρακολούθηση στη ΜΕΘ"
+  },
+  "initial_state": {
+    "current_score": 100,
+    "vitals": {
+      "hr": 110,
+      "temp": 37.0,
+      "rr": 24,
+      "spo2": 88
+    }
+  },
+  "nodes": [
+    {
+      "id": "n1_start",
+      "type": "message",
+      "text": "Βρίσκεστε στη ΜΕΘ. Ο ασθενής στην κλίνη 1 εμφανίζει ξαφνική δύσπνοια. Το μόνιτορ χτυπάει (SpO2: 88%).",
+      "next_node_id": "n2_initial_decision"
+    },
+    {
+      "id": "n2_initial_decision",
+      "type": "decision",
+      "text": "Ποια είναι η πρώτη σου ενέργεια;",
+      "options": [
+        {
+          "id": "opt_assess",
+          "label": "Άμεση Αξιολόγηση Ασθενούς",
+          "score_delta": 10,
+          "next_node_id": "n3_intervention"
+        },
+        {
+          "id": "opt_check_monitor",
+          "label": "Έλεγχος Ιστορικού στο Μόνιτορ",
+          "score_delta": 5,
+          "next_node_id": "n3_intervention"
+        }
+      ]
+    },
+    {
+      "id": "n3_intervention",
+      "type": "decision",
+      "text": "Το πρόβλημα είναι οξυγοναντικό. Πρέπει να ρυθμίσεις τον αναπνευστήρα.",
+      "options": [
+        {
+          "id": "opt_increase_o2",
+          "label": "Αύξηση FiO2 (100%)",
+          "vitals_update": { "spo2": 94, "hr": 100 },
+          "score_delta": 20,
+          "next_node_id": "n4_gate_documentation_1"
+        },
+        {
+          "id": "opt_do_nothing",
+          "label": "Καμία αλλαγή - Αναμονή",
+          "vitals_update": { "spo2": 80, "hr": 130 },
+          "score_delta": -20,
+          "next_node_id": "n4_gate_documentation_1"
+        }
+      ]
+    },
+    {
+      "id": "n4_gate_documentation_1",
+      "type": "gate",
+      "text": "GATE: Τεκμηρίωση Αξιολόγησης & Παρέμβασης στο EHR.",
+      "next_node_id": "n5_reassessment"
+    },
+    {
+      "id": "n5_reassessment",
+      "type": "message",
+      "text": "5 λεπτά αργότερα... Η κατάσταση έχει σταθεροποιηθεί, αλλά ο ασθενής παραμένει ταχύπνοος.",
+      "next_node_id": "n6_escalation_decision"
+    },
+    {
+      "id": "n6_escalation_decision",
+      "type": "decision",
+      "text": "Χρειάζεται περαιτέρω ενέργεια;",
+      "options": [
+        {
+          "id": "opt_call_doc",
+          "label": "Κλήση Ιατρού (Κλιμάκωση)",
+          "score_delta": 10,
+          "next_node_id": "n7_gate_documentation_2"
+        },
+        {
+          "id": "opt_wait",
+          "label": "Όχι, συνεχίζω παρακολούθηση",
+          "score_delta": 0,
+          "next_node_id": "n8_end_scenario"
+        }
+      ]
+    },
+    {
+      "id": "n7_gate_documentation_2",
+      "type": "gate",
+      "text": "GATE: Καταγραφή Επικοινωνίας στο Communication Log.",
+      "next_node_id": "n8_end_scenario"
+    },
+    {
+      "id": "n8_end_scenario",
+      "type": "end",
+      "text": "Το σενάριο ολοκληρώθηκε επιτυχώς!"
+    }
+  ]
+}

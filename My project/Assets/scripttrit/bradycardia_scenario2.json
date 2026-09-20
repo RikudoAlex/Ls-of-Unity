@@ -1,0 +1,143 @@
+{
+  "schema_version": "1.0",
+  "scenario_meta": {
+    "id": "icu_scenario_bradycardia_v1",
+    "title": "ΜΕΘ: Διαχείριση Σοβαρής Βραδυκαρδίας",
+    "description": "Σενάριο αντιμετώπισης επικίνδυνης πτώσης καρδιακού ρυθμού με χρήση Ατροπίνης και υποχρεωτική τεκμηρίωση.",
+    "estimated_duration_minutes": 6,
+    "difficulty": "Advanced"
+  },
+  "patient_info": {
+    "name": "Charlie",
+    "surname": "Kirkousathanas",
+    "ssn": "12038401923",
+    "admission_date": "18/09/2026",
+    "reason": "Οξύτερο έμφραγμα μυοκαρδίου - Παρακολούθηση"
+  },
+  "initial_state": {
+    "current_score": 50,
+    "vitals": {
+      "hr": 38,
+      "temp": 36.5,
+      "rr": 12,
+      "spo2": 94
+    }
+  },
+  "global_rules": [
+    {
+      "id": "rule_bradycardia_alarm",
+      "condition_hr_lt": 40,
+      "toast_message": "ΣΥΝΑΓΕΡΜΟΣ: HR < 40 bpm (Επικίνδυνη Βραδυκαρδία!)",
+      "monitor_color": "red"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "n1_start",
+      "type": "message",
+      "text": "Συναγερμός μόνιτορ: Ο καρδιακός ρυθμός του ασθενούς έπεσε στους 38 παλμούς (Βραδυκαρδία). Ο ασθενής αναφέρει ζάλη.",
+      "next_node_id": "n2_initial_assessment"
+    },
+    {
+      "id": "n2_initial_assessment",
+      "type": "decision",
+      "text": "Ποια είναι η πρώτη ενέργεια αξιολόγησης;",
+      "timeout_seconds": 25,
+      "timeout_next_node_id": "n3_med_decision",
+      "timeout_vitals_update": { "hr": 32, "spo2": 90 },
+      "timeout_score_delta": -15,
+      "timeout_toast": "Καθυστέρηση! Οι παλμοί έπεσαν στους 32 bpm.",
+      "options": [
+        {
+          "id": "opt_check_pulse",
+          "label": "Έλεγχος Σφυγμού & Αρτηριακής Πίεσης",
+          "score_delta": 10,
+          "toast": "Ο σφυγμός είναι ασθενής, η πίεση πέφτει (85/50 mmHg).",
+          "next_node_id": "n3_med_decision"
+        },
+        {
+          "id": "opt_check_leads",
+          "label": "Έλεγχος Ηλεκτροδίων ΗΚΓ",
+          "score_delta": 5,
+          "toast": "Τα ηλεκτρόδια είναι στη θέση τους, η βραδυκαρδία είναι πραγματική.",
+          "next_node_id": "n3_med_decision"
+        }
+      ]
+    },
+    {
+      "id": "n3_med_decision",
+      "type": "decision",
+      "text": "Ποια είναι η ενδεδειγμένη φαρμακευτική παρέμβαση;",
+      "options": [
+        {
+          "id": "opt_atropine",
+          "label": "Χορήγηση Ατροπίνης 1mg IV",
+          "vitals_update": { "hr": 72, "spo2": 98 },
+          "score_delta": 20,
+          "toast": "Χορηγήθηκε Ατροπίνη. Ο καρδιακός ρυθμός ανεβαίνει στους 72 bpm.",
+          "next_node_id": "n4_gate_doc_1"
+        },
+        {
+          "id": "opt_wait_doc",
+          "label": "Αναμονή για τον ιατρό χωρίς παρέμβαση",
+          "vitals_update": { "hr": 30, "spo2": 88 },
+          "score_delta": -20,
+          "toast": "Κρίσιμη καθυστέρηση! Ο ασθενής χάνει τις αισθήσεις του.",
+          "next_node_id": "n4_gate_doc_1"
+        }
+      ]
+    },
+    {
+      "id": "n4_gate_doc_1",
+      "type": "gate",
+      "text": "GATE: Καταγραφή χορήγησης φαρμάκου & ζωτικών στο EHR.",
+      "required_form_id": "intervention_form",
+      "feedback_blocked": "Πρέπει να καταγράψετε τη χορήγηση φαρμάκου στο EHR.",
+      "feedback_success": "Η φαρμακευτική αγωγή καταχωρήθηκε.",
+      "score_delta": 10,
+      "next_node_id": "n5_reassessment"
+    },
+    {
+      "id": "n5_reassessment",
+      "type": "message",
+      "text": "Ο ασθενής ανέκτησε τις αισθήσεις του. Ο καρδιακός ρυθμός είναι 72 bpm, αλλά απαιτείται περαιτέρω έλεγχος.",
+      "next_node_id": "n6_escalation_decision"
+    },
+    {
+      "id": "n6_escalation_decision",
+      "type": "decision",
+      "text": "Ποιο είναι το επόμενο βήμα παρακολούθησης;",
+      "options": [
+        {
+          "id": "opt_ecg_cardio",
+          "label": "Παραγγελία ΗΚΓ 12 απαγωγών & Κλήση Καρδιολόγου",
+          "score_delta": 10,
+          "toast": "Ειδοποιήθηκε ο καρδιολόγος και παραγγέλθηκε ΗΚΓ.",
+          "next_node_id": "n7_gate_doc_2"
+        },
+        {
+          "id": "opt_just_observe",
+          "label": "Απλή παρακολούθηση χωρίς κλήση ειδικού",
+          "score_delta": -5,
+          "toast": "Παραλείφθηκε η κλιμάκωση σε ειδικό.",
+          "next_node_id": "n8_end"
+        }
+      ]
+    },
+    {
+      "id": "n7_gate_doc_2",
+      "type": "gate",
+      "text": "GATE: Καταγραφή επικοινωνίας με Καρδιολόγο στο Communication Log.",
+      "required_form_id": "communication_log",
+      "feedback_blocked": "Εκκρεμεί η καταγραφή της επικοινωνίας στο EHR.",
+      "feedback_success": "Η κλήση στον καρδιολόγο τεκμηριώθηκε.",
+      "score_delta": 5,
+      "next_node_id": "n8_end"
+    },
+    {
+      "id": "n8_end",
+      "type": "end",
+      "text": "Το σενάριο Βραδυκαρδίας ολοκληρώθηκε επιτυχώς!"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0",
+  "scenario_meta": {
+    "id": "icu_scenario_hypotension_v1",
+    "title": "ΜΕΘ: Διαχείριση Οξείας Υπότασης",
+    "description": "Σενάριο αντιμετώπισης απότομης πτώσης πίεσης και ταχυκαρδίας.",
+    "estimated_duration_minutes": 6,
+    "difficulty": "Intermediate"
+  },
+  "patient_info": {
+    "name": "Charlie",
+    "surname": "Kirkousathanas",
+    "ssn": "12038401923",
+    "admission_date": "10/09/2025",
+    "reason": "Μετεγχειρητική παρακολούθηση - Αιμοδυναμική αστάθεια"
+  },
+  "initial_state": {
+    "current_score": 100,
+    "vitals": {
+      "hr": 125,
+      "temp": 36.6,
+      "rr": 20,
+      "spo2": 96
+    }
+  },
+  "nodes": [
+    {
+      "id": "n1_start",
+      "type": "message",
+      "text": "Ο ασθενής εμφανίζει έντονη ταχυκαρδία (HR: 125) και ζάλη. Η αρτηριακή πίεση πέφτει επικίνδυνα.",
+      "next_node_id": "n2_decision"
+    },
+    {
+      "id": "n2_decision",
+      "type": "decision",
+      "text": "Ποια είναι η άμεση κλινική ενέργεια;",
+      "options": [
+        {
+          "id": "opt_bolus",
+          "label": "Χορήγηση Bolus Υγρών (NS 0.9%)",
+          "vitals_update": { "hr": 95, "spo2": 97 },
+          "score_delta": 20,
+          "next_node_id": "n3_gate_doc"
+        },
+        {
+          "id": "opt_observe",
+          "label": "Απλή παρακολούθηση",
+          "vitals_update": { "hr": 140, "spo2": 92 },
+          "score_delta": -20,
+          "next_node_id": "n3_gate_doc"
+        }
+      ]
+    },
+    {
+      "id": "n3_gate_doc",
+      "type": "gate",
+      "text": "GATE: Τεκμηρίωση χορήγησης υγρών και ζωτικών στο EHR.",
+      "next_node_id": "n4_end"
+    },
+    {
+      "id": "n4_end",
+      "type": "end",
+      "text": "Το σενάριο Υπότασης ολοκληρώθηκε!"
+    }
+  ]
+}
