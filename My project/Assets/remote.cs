@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Video; // Don't forget this line!
+using UnityEngine.Video;
+using TMPro;  // Don't forget this line!
 /* Σε αυτό το σκριπτ, ξεικνάμε με το να δεχόμαστε ένα αντικείμενο-παιδί, το οποίο πατώντας E είτε το ενεργοποιούμε είτε όχι. Κάνοντας αυτό, συνεχίζουμε με το να θέτουμε σαν 
 active και όχι active το αντικείμενο αυτό. Το child έμεινε ως ονομασία καθώς η πρώτη προσπάθεια είχε γίνει με την δοκιμή τοποθέτησης κάμερας-παιδί. 
 */
@@ -9,7 +10,8 @@ public class MonitorControl : MonoBehaviour
     //Use this for getting the toggle data
     [SerializeField] private GameObject child;
     [SerializeField] private GameObject targetObject;
-
+	[SerializeField] private GameObject alarm;
+    [SerializeField] private TextMeshProUGUI textMeshPro;
     [SerializeField] private Camera raycastCamera;
     void Start()
     {
@@ -38,6 +40,20 @@ public class MonitorControl : MonoBehaviour
             }
             
         }
+		int a = int.Parse(textMeshPro.text);
+        if(a >= 50 && a < 100)
+        {
+            alarm.SetActive(false); 
+        }
+        if(a >= 100 || a < 50)
+        {
+            alarm.SetActive(true);
+			//Debug.Log("Heart Rate:" + a);
+			// Θέλουμε την φωτογραφία να εμφανίζεται ακόμη και αν είναι 
+            // κλειστό το Heart Monitor, καθώς θα μας δείχνει ότι "όντως , υπάρχει θέμα".
+
+        }
+
     }
 
     public void ToggleMonitor()
